@@ -1,0 +1,30 @@
+{
+  "name": "Chrome Extension Boilerplate",
+  "description": "Chrome Extension boilerplate created with React Typescript.",
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "devtools_page": "devtools.html",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": ["history", "tabs", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"]
+}
