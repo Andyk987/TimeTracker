@@ -4,7 +4,7 @@ import { START_CHECKING } from "../../constants/timeConstants";
 
 async function startCheckingApi() {
   // await chrome.runtime.sendMessage({ code: START_CHECKING });
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const id = tabs[0]?.id;
 
     chrome.tabs.sendMessage(id, { code: START_CHECKING });
@@ -14,7 +14,6 @@ async function startCheckingApi() {
 function* startChecking() {
   try {
     yield startCheckingApi();
-    yield put(timeActions.startCheckingSuccess);
   } catch (err) {
     console.log(err)
     yield put(timeActions.startCheckingError);

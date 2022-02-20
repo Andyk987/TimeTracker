@@ -38,18 +38,18 @@ class Background {
     await this.chrome.runtime.onMessage.addListener(
       (msg: Message, sender, sendResponse) => {
         console.log(msg);
-        switch (msg.code) {
-          case START_CHECKING:
-            this.startChecking();
-            sendResponse({ code: START_CHECKING_SUCCEESS });
-            break;
-          case STOP_CHECKING:
-            this.stopChecking();
-            sendResponse({ code: STOP_CHECKING_SUCCEESS });
-            break;
-          default:
-            sendResponse({ code: GET_MESSAGE_ERROR });
-        }
+      //   switch (msg.code) {
+      //     case START_CHECKING:
+      //       this.startChecking();
+      //       sendResponse({ code: START_CHECKING_SUCCEESS });
+      //       break;
+      //     case STOP_CHECKING:
+      //       this.stopChecking();
+      //       sendResponse({ code: STOP_CHECKING_SUCCEESS });
+      //       break;
+      //     default:
+      //       sendResponse({ code: GET_MESSAGE_ERROR });
+      //   }
       }
     );
   }
@@ -111,5 +111,5 @@ chrome.runtime.onInstalled.addListener((res) => {
   }
 
   const background = new Background();
-  // background.getFromContent();
+  background.getFromContent();
 });

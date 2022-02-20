@@ -3,11 +3,13 @@ import { createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 interface State {
   checking: boolean;
   complete: boolean;
+  error: string;
 }
 
 const initialState: State = {
   checking: false,
   complete: false,
+  error: '',
 };
 
 const timeSlice = createSlice({
@@ -20,7 +22,9 @@ const timeSlice = createSlice({
     startCheckingSuccess: (state, action) => {
       state.complete = action.payload;
     },
-    startCheckingError: (state, action) => {},
+    startCheckingError: (state, action) => {
+      state.error = 'fewrf'
+    },
   },
 });
 
