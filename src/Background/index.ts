@@ -6,7 +6,7 @@ import {
   STOP_CHECKING,
   STOP_CHECKING_ERROR,
   STOP_CHECKING_SUCCEESS,
-} from "./constants/timeConstants";
+} from "../constants/timeConstants";
 
 interface StringArray {
   [index: number]: string;

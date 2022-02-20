@@ -2,7 +2,7 @@ import {
   START_CHECKING,
   START_CHECKING_SUCCEESS,
   STOP_CHECKING,
-} from "./constants/timeConstants";
+} from "../constants/timeConstants";
 
 // This file is injected as a content script
 console.log("Hello from content script!");
