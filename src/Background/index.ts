@@ -1,16 +1,11 @@
 import {
-  GET_MESSAGE_ERROR,
+  CHECKING_TRUE,
   START_CHECKING,
-  START_CHECKING_ERROR,
   START_CHECKING_SUCCEESS,
   STOP_CHECKING,
   STOP_CHECKING_ERROR,
   STOP_CHECKING_SUCCEESS,
 } from "../constants/timeConstants";
-
-interface StringArray {
-  [index: number]: string;
-}
 
 interface Message {
   code: string;
@@ -22,36 +17,55 @@ console.log("Hello from background script!");
 const defaultUrl = "www.youtube.com/watch?";
 
 class Background {
-  readonly chrome: typeof chrome = chrome;
-  checking: boolean;
+  private readonly chrome: typeof chrome = chrome;
+  private checkingUrl: string;
+  private isChecking: boolean;
   timerId?: NodeJS.Timeout;
   time: number;
   timeStamp?: Date[];
   constructor() {
-    this.checking = false;
+    this.checkingUrl = defaultUrl;
+    this.isChecking = true;
     this.timerId = undefined;
     this.time = 0;
     this.timeStamp = [];
   }
 
-  async getFromContent() {
+  detectTabCreated() {
+    this.chrome.tabs.onCreated.addListener((tab: chrome.tabs.Tab) => {
+      console.log(tab)
+      if (!this.isChecking) return;
+      this.sendMessage(tab.id, { code: CHECKING_TRUE });
+    });
+  }
+
+  async getMessage() {
     await this.chrome.runtime.onMessage.addListener(
-      (msg: Message, sender, sendResponse) => {
-        console.log(msg);
-      //   switch (msg.code) {
-      //     case START_CHECKING:
-      //       this.startChecking();
-      //       sendResponse({ code: START_CHECKING_SUCCEESS });
-      //       break;
-      //     case STOP_CHECKING:
-      //       this.stopChecking();
-      //       sendResponse({ code: STOP_CHECKING_SUCCEESS });
-      //       break;
-      //     default:
-      //       sendResponse({ code: GET_MESSAGE_ERROR });
-      //   }
+      (msg: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
+        if (!msg.hasOwnProperty("code")) return;
+        const { code } = this.handleMessage(msg);
+        sendResponse(code);
       }
     );
+  }
+
+  async sendMessage(id: number, msg: Message) {
+    await this.chrome.tabs.query({ active: true }, (tabs) => {
+      this.chrome.tabs.sendMessage(id, msg, (res) => {
+        console.log(res, 'success')
+      });
+    })
+  }
+
+  handleMessage(msg: Message) {
+    switch (msg.code) {
+      case START_CHECKING:
+        this.isChecking = true;
+        return { code: START_CHECKING_SUCCEESS };
+      case STOP_CHECKING:
+        this.isChecking = false;
+        return { code: STOP_CHECKING_SUCCEESS };
+    }
   }
 
   getAllWindows() {
@@ -91,25 +105,21 @@ class Background {
 chrome.runtime.onInstalled.addListener((res) => {
   const manifest = chrome.runtime.getManifest();
 
-  if (manifest.content_scripts && manifest.content_scripts[0]) {
-    chrome.tabs.query(
-      { url: manifest.content_scripts[0].matches },
-      (tabs: chrome.tabs.Tab[]) => {
-        if (tabs[0] && tabs[0].id) {
-          chrome.scripting.executeScript(
-            {
-              target: { tabId: tabs[0].id, allFrames: true },
-              files: ["content.js"],
-            },
-            (res) => {
-              console.log(res);
-            }
-          );
-        }
+  chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
+    const id = tabs[0]?.id;
+
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: id, allFrames: true },
+        files: ["content.js"],
+      },
+      (res) => {
+        console.log(res);
       }
     );
-  }
+  });
 
   const background = new Background();
-  background.getFromContent();
+  background.detectTabCreated();
+  background.getMessage();
 });
