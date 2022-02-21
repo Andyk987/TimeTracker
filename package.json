@@ -1,15 +1,4 @@
 {
-<<<<<<< HEAD
-  "name": "front",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC"
-=======
   "name": "time-tracker",
   "version": "1.0.0",
   "description": "",
@@ -61,5 +50,4 @@
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "^4.7.4"
   }
->>>>>>> f0fc9b67456c0aca86dd2c47714ec4c2728e2878
 }
