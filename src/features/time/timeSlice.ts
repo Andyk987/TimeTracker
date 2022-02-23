@@ -1,30 +1,39 @@
 import { createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
+import { WritableDraft } from "immer/dist/internal";
 
 interface State {
-  checking: boolean;
+  checkingStatus: "Check" | "Stop" | "Loading";
+  isChecking: boolean;
   complete: boolean;
   error: string;
 }
 
 const initialState: State = {
-  checking: false,
+  checkingStatus: "Check",
+  isChecking: false,
   complete: false,
-  error: '',
+  error: "",
 };
 
 const timeSlice = createSlice({
   name: "time",
   initialState,
   reducers: {
-    startChecking: (state) => {
-      state.checking = !state.checking;
+    startChecking: (state: WritableDraft<State>) => {
+      state.checkingStatus = "Loading";
     },
-    startCheckingSuccess: (state, action) => {
-      state.complete = action.payload;
+    startCheckingSuccess: (state: WritableDraft<State>) => {
+      state.isChecking = true;
+      state.checkingStatus = "Stop";
     },
-    startCheckingError: (state, action) => {
-      state.error = 'fewrf'
+    startCheckingError: (state) => {
+      state.error = "fewrf";
     },
+
+    stopChecking: (state: WritableDraft<State>) => {
+      state.isChecking = false;
+      state.checkingStatus = "Check";
+    }
   },
 });
 

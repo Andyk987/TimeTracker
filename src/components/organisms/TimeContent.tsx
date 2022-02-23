@@ -17,18 +17,20 @@ const StyledTimeContent = styled.div`
 `;
 
 const TimeContent = () => {
-  const { checking } = useAppSelector((state: RootState) => state.time);
+  const { isChecking, checkingStatus } = useAppSelector((state: RootState) => state.time);
   const dispatch = useAppDispatch();
-  
+
   const handleClick = () => {
-    dispatch(timeActions.startChecking());
+    if (!isChecking) return dispatch(timeActions.startChecking());
+    
+    return dispatch(timeActions.stopChecking());
   };
-  
+
   return (
     <StyledTimeContent>
       <TimeButton type="circle" size="big" onClick={handleClick}>
         <Button tag="div">
-          <Span>{checking ? "stop" : "check"}</Span>
+          <Span>{checkingStatus}</Span>
         </Button>
       </TimeButton>
     </StyledTimeContent>

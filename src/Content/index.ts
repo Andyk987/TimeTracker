@@ -1,45 +1,54 @@
 import {
+  CHECKING_TRUE,
   START_CHECKING,
   START_CHECKING_SUCCEESS,
   STOP_CHECKING,
 } from "../constants/timeConstants";
 
-// This file is injected as a content script
-console.log("Hello from content script!");
-
 interface Message {
   code: string;
 }
 
+// This file is injected as a content script
+console.log("Hello from content script!");
+
+
+chrome.runtime.onMessage.addListener((msg) => {
+  console.log(msg, 'outside');
+});
+
 class Content {
   chrome: typeof chrome = chrome;
-  checking: boolean;
+  isChecking: boolean;
   defaultUrl: string;
   prevUrl: string;
   constructor() {
-    this.checking = false;
+    this.isChecking = false;
     this.defaultUrl = "www.youtube.com/watch?";
     this.prevUrl = "";
   }
 
-  listenMessage() {
-    this.chrome.runtime.onMessage.addListener((msg) => {
+  async getMessage(): Promise<void> {
+    await this.chrome.runtime.onMessage.addListener((msg) => {
       console.log(msg);
+      this.handleMessage(msg);
     });
   }
 
-  async sendToBackground(msg: Message, cb?: Function) {
-    await this.chrome.runtime.sendMessage(msg, (res: Message) => {
-      console.log(res, "res");
-      if (res.code === START_CHECKING_SUCCEESS) {
-        this.checking = true;
-      } else {
-        return;
-      }
+  async sendMessage(msg: Message): Promise<void> {
+    await this.chrome.runtime.sendMessage(msg, (res) => {
+      console.log(res, "Response");
     });
   }
 
-  detectUrlChange() {
+  handleMessage(msg: Message) {
+    switch (msg.code) {
+      case CHECKING_TRUE:
+        this.isChecking = true;
+    }
+  }
+
+  detectUrlChange(): void {
     const config = { subtree: true, childList: true };
 
     const observer: MutationObserver = new MutationObserver(() => {
@@ -47,27 +56,23 @@ class Content {
       this.prevUrl = location.href;
 
       const isEntered: boolean = location.href.includes(this.defaultUrl);
-      if (isEntered) {
-        const msg = { code: START_CHECKING };
-        this.sendToBackground(msg);
-      } else {
-        if (this.checking) {
-          const msg = { code: STOP_CHECKING };
-          this.sendToBackground(msg);
-        } else {
-          return;
-        }
-      }
+      this.handleUrlChanged(isEntered);
     });
+
     observer.observe(document, config);
   }
 
-  handleChecking(isEntered: boolean) {
-    const code: string = isEntered ? START_CHECKING : STOP_CHECKING;
-    this.chrome.runtime.sendMessage({ code });
+  handleUrlChanged(isEntered: boolean): void {
+    if (!this.isChecking) return;
+
+    if (isEntered) {
+      this.sendMessage({ code: START_CHECKING });
+    } else {
+      this.sendMessage({ code: STOP_CHECKING });
+    }
   }
 }
 
 const content = new Content();
-// content.detectUrlChange();
-content.listenMessage();
+content.detectUrlChange();
+// content.getMessage();
