@@ -12,11 +12,6 @@ interface Message {
 // This file is injected as a content script
 console.log("Hello from content script!");
 
-
-chrome.runtime.onMessage.addListener((msg) => {
-  console.log(msg, 'outside');
-});
-
 class Content {
   chrome: typeof chrome = chrome;
   isChecking: boolean;
@@ -75,4 +70,4 @@ class Content {
 
 const content = new Content();
 content.detectUrlChange();
-// content.getMessage();
+content.getMessage();

@@ -25,22 +25,13 @@ class Background {
   timeStamp?: Date[];
   constructor() {
     this.checkingUrl = defaultUrl;
-    this.isChecking = true;
+    this.isChecking = false;
     this.timerId = undefined;
     this.time = 0;
     this.timeStamp = [];
   }
 
-  detectTabCreated() {
-    this.chrome.tabs.onCreated.addListener((tab: chrome.tabs.Tab) => {
-      if (!this.isChecking) return;
-      console.log(tab,'tab')
-      // this.sendMessage(tab.id, { code: CHECKING_TRUE });
-      this.chrome.tabs.sendMessage(tab.id, { code: CHECKING_TRUE })
-    });
-  }
-
-  async getMessage() {
+  async getMessage(): Promise<void> {
     await this.chrome.runtime.onMessage.addListener(
       (msg: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
         if (!msg.hasOwnProperty("code")) return;
@@ -50,12 +41,12 @@ class Background {
     );
   }
 
-  async sendMessage(id: number, msg: Message) {
+  async sendMessage(id: number, msg: Message): Promise<void> {
     await this.chrome.tabs.query({ active: true }, (tabs) => {
       this.chrome.tabs.sendMessage(id, msg, (res) => {
-        console.log(res, 'success')
+        console.log(res, "success");
       });
-    })
+    });
   }
 
   handleMessage(msg: Message) {
@@ -67,6 +58,17 @@ class Background {
         this.isChecking = false;
         return { code: STOP_CHECKING_SUCCEESS };
     }
+  }
+  
+  detectUrlChange(arg) {
+    this.chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (changeInfo.status !== "complete") return;
+
+      if (tab.url.includes(defaultUrl)) {
+        console.log(tab, "tab-");
+        this.startChecking();
+      }
+    });
   }
 
   getAllWindows() {
@@ -85,10 +87,10 @@ class Background {
           this.time++;
           console.log(this.time);
         }, 1000);
-        reject();
+        resolve();
       });
     } catch (err) {
-      console.log("err occ");
+      console.log(err, "err occ");
     }
   }
 
@@ -103,38 +105,22 @@ class Background {
   }
 }
 
+const background = new Background();
+
 chrome.runtime.onInstalled.addListener((res) => {
   const manifest = chrome.runtime.getManifest();
 
   chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
-    const id = tabs[0]?.id;
-
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: id, allFrames: true },
-        files: ["content.js"],
-      },
-      (res) => {
-        console.log(res);
-      }
-    );
+    tabs.forEach((v, i) => {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tabs[i]?.id },
+          files: ["content.js"],
+        }
+      );
+    });
   });
-
-  const background = new Background();
-  // background.detectTabCreated();
-  background.getMessage();
 });
 
-const rules: chrome.events.Rule[] = [];
-
-chrome.declarativeContent.PageStateMatcher
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if(changeInfo.status === 'complete') {
-    console.log(tab, 'tab')
-  }
-})
-
-chrome.tabs.onUpdated.addRules(rules, () => {
-
-})
+background.getMessage();
+background.detectUrlChange(false);
