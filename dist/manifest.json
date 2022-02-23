@@ -25,6 +25,12 @@
       "js": ["content.js"]
     }
   ],
-  "permissions": ["history", "tabs", "activeTab", "scripting"],
+  "permissions": [
+    "history",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "declarativeContent"
+  ],
   "host_permissions": ["<all_urls>"]
 }
