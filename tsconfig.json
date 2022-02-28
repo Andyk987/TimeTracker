@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "experimentalDecorators": true,
         "target": "es6",
         "module": "esnext",
         "moduleResolution": "node",
@@ -11,7 +10,9 @@
         "allowJs": true,
         "jsx": "react",
         "allowSyntheticDefaultImports": true,
-        "keyofStringsOnly": true
+        "keyofStringsOnly": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "typeRoots": [
         "node_modules/@types",

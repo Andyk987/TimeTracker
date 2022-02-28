@@ -30,7 +30,7 @@
     "tabs",
     "activeTab",
     "scripting",
-    "declarativeContent"
+    "storage"
   ],
   "host_permissions": ["<all_urls>"]
 }
