@@ -4,14 +4,16 @@ import { WritableDraft } from "immer/dist/internal";
 interface State {
   checkingStatus: "Check" | "Stop" | "Loading";
   isChecking: boolean;
-  complete: boolean;
   error: string;
 }
+
+chrome.runtime.getBackgroundPage((res) => {
+  console.log
+})
 
 const initialState: State = {
   checkingStatus: "Check",
   isChecking: false,
-  complete: false,
   error: "",
 };
 
@@ -25,14 +27,21 @@ const timeSlice = createSlice({
     startCheckingSuccess: (state: WritableDraft<State>) => {
       state.isChecking = true;
       state.checkingStatus = "Stop";
+      
     },
     startCheckingError: (state) => {
       state.error = "fewrf";
     },
 
     stopChecking: (state: WritableDraft<State>) => {
+      state.checkingStatus = "Loading";
+    },
+    stopCheckingSuccess: (state: WritableDraft<State>) => {
       state.isChecking = false;
       state.checkingStatus = "Check";
+    },
+    stopCheckingError: (state) => {
+      state.error = "fewrfe";
     }
   },
 });

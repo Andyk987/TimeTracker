@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import {
   CHECKING_TRUE,
   START_CHECKING,
@@ -16,10 +17,18 @@ console.log("Hello from background script!");
 
 const defaultUrl = "www.youtube.com/watch?";
 
+const valid = (target, property, descriptor: PropertyDescriptor) => {
+  console.log(descriptor);
+  descriptor.value = (state) => {
+    console.log(state);
+  };
+  return descriptor;
+};
+
 class Background {
   private readonly chrome: typeof chrome = chrome;
   private checkingUrl: string;
-  private isChecking: boolean;
+  isChecking: boolean;
   timerId?: NodeJS.Timeout;
   time: number;
   timeStamp?: Date[];
@@ -35,6 +44,7 @@ class Background {
     await this.chrome.runtime.onMessage.addListener(
       (msg: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
         if (!msg.hasOwnProperty("code")) return;
+        console.log(msg);
         const { code } = this.handleMessage(msg);
         sendResponse(code);
       }
@@ -53,22 +63,45 @@ class Background {
     switch (msg.code) {
       case START_CHECKING:
         this.isChecking = true;
+        this.chrome.storage.sync.set({ isChecking: true, checkingStatus: "Stop" });
+        this.detectUrlChange();
         return { code: START_CHECKING_SUCCEESS };
       case STOP_CHECKING:
         this.isChecking = false;
+        this.chrome.storage.sync.set({ isChecking: false, checkingStatus: "Check" });
         return { code: STOP_CHECKING_SUCCEESS };
     }
   }
-  
-  detectUrlChange(arg) {
-    this.chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      if (changeInfo.status !== "complete") return;
 
-      if (tab.url.includes(defaultUrl)) {
-        console.log(tab, "tab-");
-        this.startChecking();
+  updateListener(
+    tabId: number,
+    changeInfo: chrome.tabs.TabChangeInfo,
+    tab: chrome.tabs.Tab
+  ) {
+    console.log(this.isChecking);
+    if (!this.isChecking)
+      return this.chrome.tabs.onUpdated.removeListener(this.updateListener);
+
+    // isChecking === true
+    if (changeInfo.status !== "complete") return;
+    console.log(tab);
+  }
+
+  detectUrlChange() {
+    return this.chrome.tabs.onUpdated.addListener(
+      (
+        tabId: number,
+        changeInfo: chrome.tabs.TabChangeInfo,
+        tab: chrome.tabs.Tab
+      ) => {
+        if (!this.isChecking)
+          return this.chrome.tabs.onUpdated.removeListener;
+
+        // isChecking === true
+        if (changeInfo.status !== "complete") return;
+        console.log(tab);
       }
-    });
+    );
   }
 
   getAllWindows() {
@@ -112,15 +145,12 @@ chrome.runtime.onInstalled.addListener((res) => {
 
   chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
     tabs.forEach((v, i) => {
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: tabs[i]?.id },
-          files: ["content.js"],
-        }
-      );
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[i]?.id },
+        files: ["content.js"],
+      });
     });
   });
 });
 
 background.getMessage();
-background.detectUrlChange(false);
