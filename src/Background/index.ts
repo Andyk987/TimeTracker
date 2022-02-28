@@ -59,8 +59,8 @@ class Background {
         return { code: STOP_CHECKING_SUCCEESS };
     }
   }
-  
-  detectUrlChange(arg) {
+
+  detectUrlChange() {
     this.chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       if (changeInfo.status !== "complete") return;
 
@@ -123,4 +123,8 @@ chrome.runtime.onInstalled.addListener((res) => {
 });
 
 background.getMessage();
-background.detectUrlChange(false);
+background.detectUrlChange();
+
+chrome.action.onClicked.addListener((tab) => {
+  console.log(tab)
+})
