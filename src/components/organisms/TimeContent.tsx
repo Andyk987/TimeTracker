@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { RootState } from "../../app/store";
-import { timeActions } from "../../features/time/timeSlice";
+import { timeActions, TimeState } from "../../features/time/timeSlice";
 import Button from "../atoms/Button";
 import Span from "../atoms/Span";
 import TimeButton from "../molecules/TimeButton";
@@ -17,21 +17,16 @@ const StyledTimeContent = styled.div`
 `;
 
 const TimeContent = () => {
-  const [state, setState] = useState(false);
+  const [state, setState] = useState<TimeState>({
+    checkingStatus: 'Check',
+    isChecking: false,
+  });
 
   const { isChecking, checkingStatus } = useAppSelector((state: RootState) => state.time);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    chrome.storage.sync.get(['isChecking'], (res) => {
-      if (res) {
-        if (res.isChecking) {
-          setState(true);
-        } else {
-          setState(false);
-        }
-      }
-    })
+    dispatch(timeActions.getInitState());
   }, [])
 
   const handleClick = () => {
@@ -44,8 +39,7 @@ const TimeContent = () => {
     <StyledTimeContent>
       <TimeButton type="circle" size="big" onClick={handleClick}>
         <Button tag="div">
-          {/* <Span>{checkingStatus}</Span> */}
-          <Span>{state ? "Stop" : "Check"}</Span>
+          <Span>{checkingStatus}</Span>
         </Button>
       </TimeButton>
     </StyledTimeContent>

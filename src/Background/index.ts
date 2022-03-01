@@ -17,14 +17,6 @@ console.log("Hello from background script!");
 
 const defaultUrl = "www.youtube.com/watch?";
 
-const valid = (target, property, descriptor: PropertyDescriptor) => {
-  console.log(descriptor);
-  descriptor.value = (state) => {
-    console.log(state);
-  };
-  return descriptor;
-};
-
 class Background {
   private readonly chrome: typeof chrome = chrome;
   private checkingUrl: string;
@@ -63,28 +55,20 @@ class Background {
     switch (msg.code) {
       case START_CHECKING:
         this.isChecking = true;
-        this.chrome.storage.sync.set({ isChecking: true, checkingStatus: "Stop" });
+        this.chrome.storage.sync.set({
+          isChecking: true,
+          checkingStatus: "Stop",
+        });
         this.detectUrlChange();
         return { code: START_CHECKING_SUCCEESS };
       case STOP_CHECKING:
         this.isChecking = false;
-        this.chrome.storage.sync.set({ isChecking: false, checkingStatus: "Check" });
+        this.chrome.storage.sync.set({
+          isChecking: false,
+          checkingStatus: "Check",
+        });
         return { code: STOP_CHECKING_SUCCEESS };
     }
-  }
-
-  updateListener(
-    tabId: number,
-    changeInfo: chrome.tabs.TabChangeInfo,
-    tab: chrome.tabs.Tab
-  ) {
-    console.log(this.isChecking);
-    if (!this.isChecking)
-      return this.chrome.tabs.onUpdated.removeListener(this.updateListener);
-
-    // isChecking === true
-    if (changeInfo.status !== "complete") return;
-    console.log(tab);
   }
 
   detectUrlChange() {
@@ -94,12 +78,15 @@ class Background {
         changeInfo: chrome.tabs.TabChangeInfo,
         tab: chrome.tabs.Tab
       ) => {
-        if (!this.isChecking)
-          return this.chrome.tabs.onUpdated.removeListener;
+        if (!this.isChecking) return this.chrome.tabs.onUpdated.removeListener;
 
         // isChecking === true
         if (changeInfo.status !== "complete") return;
-        console.log(tab);
+        if (tab.url.includes(defaultUrl)) {
+          const id = this.timerId;
+          console.log(id, this.timerId, 'id')
+          this.startChecking(this.timerId);
+        }
       }
     );
   }
@@ -113,8 +100,10 @@ class Background {
     });
   }
 
-  async startChecking() {
+  async startChecking(id: NodeJS.Timeout): Promise<void> {
     try {
+      if (id) return;
+
       await new Promise<void>((resolve, reject) => {
         this.timerId = setInterval(() => {
           this.time++;
@@ -156,5 +145,5 @@ chrome.runtime.onInstalled.addListener((res) => {
 background.getMessage();
 
 chrome.action.setPopup({
-  popup: 'popup.html'
-})
+  popup: "popup.html",
+});
