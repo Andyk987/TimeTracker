@@ -154,3 +154,7 @@ chrome.runtime.onInstalled.addListener((res) => {
 });
 
 background.getMessage();
+
+chrome.action.setPopup({
+  popup: 'popup.html'
+})
