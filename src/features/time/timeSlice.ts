@@ -7,10 +7,6 @@ interface State {
   error: string;
 }
 
-chrome.runtime.getBackgroundPage((res) => {
-  console.log
-})
-
 const initialState: State = {
   checkingStatus: "Check",
   isChecking: false,
