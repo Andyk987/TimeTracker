@@ -2,6 +2,7 @@ import "reflect-metadata";
 import {
   CHECKING_TRUE,
   START_CHECKING,
+  START_CHECKING_ERROR,
   START_CHECKING_SUCCEESS,
   STOP_CHECKING,
   STOP_CHECKING_ERROR,
@@ -12,10 +13,36 @@ interface Message {
   code: string;
 }
 
+chrome.action.setPopup({
+  popup: "popup.html",
+});
+
+chrome.runtime.onInstalled.addListener((res) => {
+  const manifest = chrome.runtime.getManifest();
+
+  chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
+    tabs.forEach((v, i) => {
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[i]?.id },
+        files: ["content.js"],
+      });
+    });
+  });
+});
+
+
 // This file is ran as a background script
 console.log("Hello from background script!");
 
 const defaultUrl = "www.youtube.com/watch?";
+
+function stateCheck (target, property, descriptor: PropertyDescriptor) {
+  descriptor.value = (arg) => {
+    console.log(arg)
+    if (!arg) throw Error("State is checked!");
+  }
+  return descriptor;
+}
 
 class Background {
   private readonly chrome: typeof chrome = chrome;
@@ -32,13 +59,17 @@ class Background {
     this.timeStamp = [];
   }
 
+  @stateCheck
+  test(state: boolean) {
+  }
+
   async getMessage(): Promise<void> {
     await this.chrome.runtime.onMessage.addListener(
       (msg: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
         if (!msg.hasOwnProperty("code")) return;
         console.log(msg);
         const { code } = this.handleMessage(msg);
-        sendResponse(code);
+        sendResponse(START_CHECKING_SUCCEESS);
       }
     );
   }
@@ -54,41 +85,58 @@ class Background {
   handleMessage(msg: Message) {
     switch (msg.code) {
       case START_CHECKING:
-        this.isChecking = true;
-        this.chrome.storage.sync.set({
-          isChecking: true,
-          checkingStatus: "Stop",
-        });
-        this.detectUrlChange();
-        return { code: START_CHECKING_SUCCEESS };
+        const startResult = this.start();
+        return { code: startResult };
       case STOP_CHECKING:
-        this.isChecking = false;
-        this.chrome.storage.sync.set({
-          isChecking: false,
-          checkingStatus: "Check",
-        });
-        return { code: STOP_CHECKING_SUCCEESS };
+        const stopResult = this.stop();
+        return { code: stopResult };
+    }
+  }
+
+  start(): string {
+    try {
+      this.test(this.isChecking)
+      this.isChecking = true;
+      this.chrome.storage.sync.set({
+        isChecking: true,
+        checkingStatus: "Stop",
+      });
+      this.detectUrlChange();
+      return START_CHECKING_SUCCEESS
+    } catch (err) {
+      console.log(err, 'start err');
+      return START_CHECKING_ERROR
+    }
+    
+  }
+
+  stop() {
+    try {
+      this.isChecking = false;
+      this.chrome.storage.sync.set({
+        isChecking: false,
+        checingStatus: "Check",
+      });
+      return STOP_CHECKING_SUCCEESS
+    } catch (err) {
+      console.log(err);
+      return STOP_CHECKING_ERROR
     }
   }
 
   detectUrlChange() {
-    return this.chrome.tabs.onUpdated.addListener(
-      (
-        tabId: number,
-        changeInfo: chrome.tabs.TabChangeInfo,
-        tab: chrome.tabs.Tab
-      ) => {
-        if (!this.isChecking) return this.chrome.tabs.onUpdated.removeListener;
+    return this.chrome.tabs.onUpdated.addListener((
+      tabId: number,
+      changeInfo: chrome.tabs.TabChangeInfo,
+      tab: chrome.tabs.Tab
+    ) => {
+      if (!this.isChecking) return this.chrome.tabs.onUpdated.removeListener;
 
-        // isChecking === true
-        if (changeInfo.status !== "complete") return;
-        if (tab.url.includes(defaultUrl)) {
-          const id = this.timerId;
-          console.log(id, this.timerId, 'id')
-          this.startChecking(this.timerId);
-        }
+      if (changeInfo.status !== "complete") return;
+      if (tab.url.includes(defaultUrl)) {
+        const id = this.timerId;
       }
-    );
+    })
   }
 
   getAllWindows() {
@@ -119,8 +167,7 @@ class Background {
   stopChecking() {
     const id = this.timerId;
     console.log(id, "id");
-    if (!id)
-      return this.chrome.runtime.sendMessage({ code: STOP_CHECKING_ERROR });
+    if (!id) return;
 
     clearInterval(id);
     this.timerId = undefined;
@@ -129,21 +176,6 @@ class Background {
 
 const background = new Background();
 
-chrome.runtime.onInstalled.addListener((res) => {
-  const manifest = chrome.runtime.getManifest();
-
-  chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
-    tabs.forEach((v, i) => {
-      chrome.scripting.executeScript({
-        target: { tabId: tabs[i]?.id },
-        files: ["content.js"],
-      });
-    });
-  });
-});
-
-background.getMessage();
-
-chrome.action.setPopup({
-  popup: "popup.html",
-});
+chrome.runtime.onInstalled.addListener((details: chrome.runtime.InstalledDetails) => {
+  if (details.hasOwnProperty('reason')) background.getMessage();
+})
