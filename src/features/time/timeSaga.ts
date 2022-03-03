@@ -3,7 +3,6 @@ import {
   delay,
   fork,
   put,
-  takeEvery,
   takeLatest,
 } from "redux-saga/effects";
 import { timeActions } from "./timeSlice";
@@ -16,17 +15,17 @@ import {
 
 const getInitStateApi = async () => await chrome.storage.sync.get();
 
-async function startCheckingApi() {
+async function startCheckingApi(): Promise<void> {
   await chrome.runtime.sendMessage({ code: START_CHECKING }, (res) => {
     console.log(res);
-    if (res !== START_CHECKING_SUCCEESS) throw Error;
+    if (res.code !== START_CHECKING_SUCCEESS) throw Error;
   });
 }
 
-async function stopCheckingApi() {
+async function stopCheckingApi(): Promise<void> {
   await chrome.runtime.sendMessage({ code: STOP_CHECKING }, (res) => {
     console.log(res);
-    if (res !== STOP_CHECKING_SUCCEESS) throw Error;
+    if (res.code !== STOP_CHECKING_SUCCEESS) throw Error;
   });
 }
 

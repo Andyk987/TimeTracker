@@ -1,15 +1,18 @@
 import { createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import { WritableDraft } from "immer/dist/internal";
+import { GET_TIME } from "../../constants/timeConstants";
 
 export interface TimeState {
   checkingStatus: "Check" | "Stop" | "Loading";
   isChecking: boolean;
+  time?: number;
   error?: string;
 }
 
 const initialState: TimeState = {
   checkingStatus: "Check",
   isChecking: false,
+  time: 0,
   error: "",
 };
 
@@ -46,6 +49,10 @@ const timeSlice = createSlice({
     },
     stopCheckingError: (state) => {
       state.error = "fewrfe";
+    },
+
+    getTime: (state: WritableDraft<TimeState>, action) => {
+      state.time += action.payload;
     },
   },
 });

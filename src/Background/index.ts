@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import {
   CHECKING_TRUE,
+  GET_TIME,
   START_CHECKING,
   START_CHECKING_ERROR,
   START_CHECKING_SUCCEESS,
@@ -10,7 +11,7 @@ import {
 } from "../constants/timeConstants";
 
 interface Message {
-  code: string;
+  code: string | number;
 }
 
 chrome.action.setPopup({
@@ -47,8 +48,8 @@ function stateCheck (target, property, descriptor: PropertyDescriptor) {
 class Background {
   private readonly chrome: typeof chrome = chrome;
   private checkingUrl: string;
-  isChecking: boolean;
-  timerId?: NodeJS.Timeout;
+  private isChecking: boolean;
+  private timerId?: NodeJS.Timeout;
   time: number;
   timeStamp?: Date[];
   constructor() {
@@ -59,17 +60,13 @@ class Background {
     this.timeStamp = [];
   }
 
-  @stateCheck
-  test(state: boolean) {
-  }
-
   async getMessage(): Promise<void> {
     await this.chrome.runtime.onMessage.addListener(
       (msg: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
         if (!msg.hasOwnProperty("code")) return;
         console.log(msg);
-        const { code } = this.handleMessage(msg);
-        sendResponse(START_CHECKING_SUCCEESS);
+        const result = this.handleMessage(msg);
+        sendResponse(result);
       }
     );
   }
@@ -90,12 +87,19 @@ class Background {
       case STOP_CHECKING:
         const stopResult = this.stop();
         return { code: stopResult };
+      case GET_TIME:
+        const getTimeResult = this.getTime();
+        return { code: getTimeResult };
     }
   }
 
-  start(): string {
+  getTime(): number {
+    const time = this.time;
+    return time;
+  }
+
+  start(): String {
     try {
-      this.test(this.isChecking)
       this.isChecking = true;
       this.chrome.storage.sync.set({
         isChecking: true,
@@ -110,13 +114,15 @@ class Background {
     
   }
 
-  stop() {
+  stop(): String {
     try {
       this.isChecking = false;
       this.chrome.storage.sync.set({
         isChecking: false,
-        checingStatus: "Check",
+        checkingStatus: "Check",
       });
+      this.stopChecking();
+      console.log(this.time);
       return STOP_CHECKING_SUCCEESS
     } catch (err) {
       console.log(err);
@@ -124,7 +130,7 @@ class Background {
     }
   }
 
-  detectUrlChange() {
+  detectUrlChange(): void {
     return this.chrome.tabs.onUpdated.addListener((
       tabId: number,
       changeInfo: chrome.tabs.TabChangeInfo,
@@ -134,7 +140,7 @@ class Background {
 
       if (changeInfo.status !== "complete") return;
       if (tab.url.includes(defaultUrl)) {
-        const id = this.timerId;
+        this.startChecking();
       }
     })
   }
@@ -148,9 +154,9 @@ class Background {
     });
   }
 
-  async startChecking(id: NodeJS.Timeout): Promise<void> {
+  async startChecking(): Promise<void> {
     try {
-      if (id) return;
+      if (this.timerId) return;
 
       await new Promise<void>((resolve, reject) => {
         this.timerId = setInterval(() => {

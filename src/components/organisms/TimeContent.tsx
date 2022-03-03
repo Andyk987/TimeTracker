@@ -2,6 +2,7 @@ import React, { memo, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { RootState } from "../../app/store";
+import { GET_TIME } from "../../constants/timeConstants";
 import { timeActions, TimeState } from "../../features/time/timeSlice";
 import Button from "../atoms/Button";
 import Span from "../atoms/Span";
@@ -18,21 +19,29 @@ const StyledTimeContent = styled.div`
 
 const TimeContent = () => {
   const [state, setState] = useState<TimeState>({
-    checkingStatus: 'Check',
+    checkingStatus: "Check",
     isChecking: false,
   });
 
-  const { isChecking, checkingStatus } = useAppSelector((state: RootState) => state.time);
+  const { isChecking, checkingStatus, time } = useAppSelector(
+    (state: RootState) => state.time
+  );
   const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(timeActions.getInitState());
-  }, [])
+  }, []);
 
   const handleClick = () => {
     if (!isChecking) return dispatch(timeActions.startChecking());
 
     return dispatch(timeActions.stopChecking());
+  };
+
+  const handleClick2 = async () => {
+    await chrome.runtime.sendMessage({ code: GET_TIME }, async (res) => {
+      await dispatch(timeActions.getTime(res.code))
+    })
   };
 
   return (
@@ -42,6 +51,8 @@ const TimeContent = () => {
           <Span>{checkingStatus}</Span>
         </Button>
       </TimeButton>
+      <Span>{time}</Span>
+      <Button onClick={handleClick2}>Click</Button>
     </StyledTimeContent>
   );
 };
