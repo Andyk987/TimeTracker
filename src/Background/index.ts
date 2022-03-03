@@ -95,7 +95,7 @@ class Background {
     this.chrome.windows.getAll((windows: chrome.windows.Window[]) => {
       windows &&
         windows.forEach((window) => {
-          window.tabs?.forEach((tab: chrome.tabs.Tab) => {});
+          window.tabs?.forEach((tab: chrome.tabs.Tab) => { });
         });
     });
   }
@@ -103,7 +103,6 @@ class Background {
   async startChecking(id: NodeJS.Timeout): Promise<void> {
     try {
       if (id) return;
-
       await new Promise<void>((resolve, reject) => {
         this.timerId = setInterval(() => {
           this.time++;
