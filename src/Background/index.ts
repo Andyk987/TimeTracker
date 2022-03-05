@@ -156,12 +156,8 @@ class Background {
 
   async startChecking(): Promise<void> {
     try {
-<<<<<<< HEAD
-      if (id) return;
-=======
       if (this.timerId) return;
 
->>>>>>> 8d962d787f85db36a8af0c251f66c5e634c595bd
       await new Promise<void>((resolve, reject) => {
         this.timerId = setInterval(() => {
           this.time++;
