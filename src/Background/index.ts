@@ -105,6 +105,7 @@ class Background {
         isChecking: true,
         checkingStatus: "Stop",
       });
+      this.getAllWindows();
       this.detectUrlChange();
       return START_CHECKING_SUCCEESS
     } catch (err) {
@@ -146,11 +147,17 @@ class Background {
   }
 
   getAllWindows() {
-    this.chrome.windows.getAll((windows: chrome.windows.Window[]) => {
-      windows &&
-        windows.forEach((window) => {
-          window.tabs?.forEach((tab: chrome.tabs.Tab) => {});
-        });
+    const urlfilter = (tab: chrome.tabs.Tab) => tab.url.includes(defaultUrl);
+    
+    const res = this.chrome.windows.getAll({ populate: true }, (windows: chrome.windows.Window[]) => {
+      for (let i=0; i<windows.length; i++) {
+        const included = windows[i].tabs.some(urlfilter);
+        if (included) {
+          this.startChecking();
+          console.log('cb in process!')
+          break;
+        };
+      }
     });
   }
 
