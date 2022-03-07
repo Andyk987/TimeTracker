@@ -52,7 +52,7 @@ const TimeContent = () => {
         </Button>
       </TimeButton>
       <Span>{time}</Span>
-      <Button onClick={handleClick2}>Click</Button>
+      {/* <Button onClick={handleClick2}>Click</Button> */}
     </StyledTimeContent>
   );
 };
