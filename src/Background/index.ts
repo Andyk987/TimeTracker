@@ -18,46 +18,24 @@ chrome.action.setPopup({
   popup: "popup.html",
 });
 
-chrome.runtime.onInstalled.addListener((res) => {
-  const manifest = chrome.runtime.getManifest();
-
-  chrome.tabs.query({ url: manifest.content_scripts[0].matches }, (tabs) => {
-    tabs.forEach((v, i) => {
-      chrome.scripting.executeScript({
-        target: { tabId: tabs[i]?.id },
-        files: ["content.js"],
-      });
-    });
-  });
-});
-
-
 // This file is ran as a background script
 console.log("Hello from background script!");
 
 const defaultUrl = "www.youtube.com/watch?";
 
-function stateCheck (target, property, descriptor: PropertyDescriptor) {
-  descriptor.value = (arg) => {
-    console.log(arg)
-    if (!arg) throw Error("State is checked!");
-  }
-  return descriptor;
-}
-
 class Background {
   private readonly chrome: typeof chrome = chrome;
   private checkingUrl: string;
   private isChecking: boolean;
+  private checkingUrlIds: number[];
   private timerId?: NodeJS.Timeout;
   time: number;
-  timeStamp?: Date[];
   constructor() {
     this.checkingUrl = defaultUrl;
     this.isChecking = false;
+    this.checkingUrlIds = [];
     this.timerId = undefined;
     this.time = 0;
-    this.timeStamp = [];
   }
 
   async getMessage(): Promise<void> {
@@ -82,10 +60,10 @@ class Background {
   handleMessage(msg: Message) {
     switch (msg.code) {
       case START_CHECKING:
-        const startResult = this.start();
+        const startResult = this.startChecking();
         return { code: startResult };
       case STOP_CHECKING:
-        const stopResult = this.stop();
+        const stopResult = this.stopChecking();
         return { code: stopResult };
       case GET_TIME:
         const getTimeResult = this.getTime();
@@ -98,70 +76,101 @@ class Background {
     return time;
   }
 
-  start(): String {
+  startChecking(): string {
     try {
+      const urlfilter = (tab: chrome.tabs.Tab) => tab.url.includes(defaultUrl);
+
       this.isChecking = true;
       this.chrome.storage.sync.set({
         isChecking: true,
         checkingStatus: "Stop",
       });
-      this.getAllWindows();
-      this.detectUrlChange();
-      return START_CHECKING_SUCCEESS
+      const allWindows = this.getAllWindows();
+      allWindows
+        .then((windows: chrome.windows.Window[]) => {
+          for (let i = 0; i < windows.length; i++) {
+            const included = windows[i].tabs.some(urlfilter);
+            if (included) {
+              console.log("included");
+              this.startTimer();
+              console.log("cb in process!");
+              break;
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        })
+        .finally(() => {
+          console.log("next");
+          this.detectUrlChange();
+        });
+      return START_CHECKING_SUCCEESS;
     } catch (err) {
-      console.log(err, 'start err');
-      return START_CHECKING_ERROR
+      console.log(err, "start err");
+      return START_CHECKING_ERROR;
     }
-    
   }
 
-  stop(): String {
+  stopChecking(): string {
     try {
       this.isChecking = false;
       this.chrome.storage.sync.set({
         isChecking: false,
         checkingStatus: "Check",
       });
-      this.stopChecking();
+      this.stopTimer();
       console.log(this.time);
-      return STOP_CHECKING_SUCCEESS
+      return STOP_CHECKING_SUCCEESS;
     } catch (err) {
       console.log(err);
-      return STOP_CHECKING_ERROR
+      return STOP_CHECKING_ERROR;
     }
   }
 
-  detectUrlChange(): void {
-    return this.chrome.tabs.onUpdated.addListener((
-      tabId: number,
-      changeInfo: chrome.tabs.TabChangeInfo,
-      tab: chrome.tabs.Tab
-    ) => {
-      if (!this.isChecking) return this.chrome.tabs.onUpdated.removeListener;
-
-      if (changeInfo.status !== "complete") return;
-      if (tab.url.includes(defaultUrl)) {
-        this.startChecking();
-      }
-    })
+  detectUrlChange() {
+    this.detectUrlCreated();
+    this.detectUrlRemoved();
   }
 
-  getAllWindows() {
-    const urlfilter = (tab: chrome.tabs.Tab) => tab.url.includes(defaultUrl);
-    
-    const res = this.chrome.windows.getAll({ populate: true }, (windows: chrome.windows.Window[]) => {
-      for (let i=0; i<windows.length; i++) {
-        const included = windows[i].tabs.some(urlfilter);
-        if (included) {
-          this.startChecking();
-          console.log('cb in process!')
-          break;
-        };
+  detectUrlCreated(): void {
+    return this.chrome.tabs.onUpdated.addListener(
+      (
+        tabId: number,
+        changeInfo: chrome.tabs.TabChangeInfo,
+        tab: chrome.tabs.Tab
+      ) => {
+        if (!this.isChecking) return this.chrome.tabs.onUpdated.removeListener;
+
+        if (changeInfo.status !== "complete") return;
+        if (tab.url.includes(defaultUrl)) {
+          this.checkingUrlIds = [...this.checkingUrlIds, tabId];
+          this.startTimer();
+        }
       }
-    });
+    );
   }
 
-  async startChecking(): Promise<void> {
+  detectUrlRemoved() {
+    this.chrome.tabs.onRemoved.addListener(
+      (id: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
+        const ids = this.checkingUrlIds;
+        const index = ids.indexOf(id);
+        if (index === -1) return;
+
+        ids.splice(index, 1);
+        console.log(this.checkingUrlIds);
+
+        if (ids.length === 0) this.stopTimer();
+      }
+    );
+  }
+
+  async getAllWindows() {
+    return await this.chrome.windows.getAll({ populate: true });
+  }
+
+  async startTimer(): Promise<void> {
     try {
       if (this.timerId) return;
 
@@ -177,7 +186,7 @@ class Background {
     }
   }
 
-  stopChecking() {
+  stopTimer() {
     const id = this.timerId;
     console.log(id, "id");
     if (!id) return;
@@ -189,6 +198,12 @@ class Background {
 
 const background = new Background();
 
-chrome.runtime.onInstalled.addListener((details: chrome.runtime.InstalledDetails) => {
-  if (details.hasOwnProperty('reason')) background.getMessage();
-})
+chrome.runtime.onInstalled.addListener(
+  (details: chrome.runtime.InstalledDetails) => {
+    if (details.hasOwnProperty("reason")) background.getMessage();
+  }
+);
+
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  console.log(tabId, removeInfo);
+});
