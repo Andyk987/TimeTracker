@@ -69,5 +69,5 @@ class Content {
 }
 
 const content = new Content();
-content.detectUrlChange();
+// content.detectUrlChange();
 content.getMessage();
