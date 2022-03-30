@@ -203,7 +203,3 @@ chrome.runtime.onInstalled.addListener(
     if (details.hasOwnProperty("reason")) background.getMessage();
   }
 );
-
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  console.log(tabId, removeInfo);
-});

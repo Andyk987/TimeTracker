@@ -42,9 +42,14 @@ const config = {
         ],
         include: /\.module\.css$/,
       },
+      // {
+      //   test: /\.svg$/,
+      //   use: "file-loader",
+      // },
       {
-        test: /\.svg$/,
-        use: "file-loader",
+        test: /\.svg$/i,
+        issuer: /\.[jt]sx?$/,
+        use: ['@svgr/webpack'],
       },
       {
         test: /\.png$/,

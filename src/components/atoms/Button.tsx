@@ -1,44 +1,55 @@
-import React, { memo } from "react";
-import styled from "styled-components";
+import React, { memo } from 'react';
+import styled from 'styled-components';
 
-interface ButtonProps {
-  children?: React.ReactNode;
-  tag?: "button" | "div";
+interface ButtonStyles {
+  width?: string;
+  height?: string;
   color?: string;
   bgColor?: string;
   border?: string;
-  flex?: number | "auto";
+  radius?: string;
+  gap?: string;
+}
+
+interface ButtonProps extends ButtonStyles {
+  children?: React.ReactNode;
+  tag?: 'button' | 'div';
+  icon?: SVGAElement;
   url?: string;
   className?: string;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>) => void; // only in button tag
+  onClick?: (
+    e: React.MouseEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>
+  ) => void;
 }
 
 const StyledButton = styled.button<ButtonProps>`
   display: flex;
   justify-content: center;
   align-items: center;
-`;
-
-const StyledDiv = styled.div<ButtonProps>`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   cursor: pointer;
+  width: ${(props) => (props.width ? props.width : 'auto')};
+  height: ${(props) => (props.height ? props.height : 'auto')};
+  color: ${(props) => props.color};
+  background: ${(props) => (props.bgColor ? props.bgColor : 'none')};
+  border: ${(props) => props.border};
+  border-radius: ${(props) => props.radius};
+  gap: ${(props) => props.gap};
 `;
 
-const Button = ({
+const Button: React.FC<ButtonProps> = ({
   children,
-  tag = "button",
-  flex = "auto",
-  color = "black",
-  onClick
-}: ButtonProps) => {
-  const buttonTag = <StyledButton onClick={onClick}>{children}</StyledButton>;
-
-  const divTag = <StyledDiv onClick={onClick}>{children}</StyledDiv>;
-
-  return tag === "button" ? buttonTag : divTag;
+  tag,
+  icon,
+  url,
+  className,
+  onClick,
+  ...args
+}) => {
+  return (
+    <StyledButton {...args} as={tag} onClick={onClick} className={className}>
+      {children}
+    </StyledButton>
+  );
 };
 
 export default memo(Button);

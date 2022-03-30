@@ -13,8 +13,11 @@ const StyledTitle = styled.div`
   flex-grow: 1;
   justify-content: center;
   align-items: center;
-  font-family: "Palanquin", sans-serif;
+  text-align: center;
+  font-family: 'Sarabun', sans-serif;
   font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
   letter-spacing: 1px;
 `;
 
