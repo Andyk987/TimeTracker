@@ -12,7 +12,8 @@
         "allowSyntheticDefaultImports": true,
         "keyofStringsOnly": true,
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "outDir": "./dist"
     },
     "typeRoots": [
         "node_modules/@types",

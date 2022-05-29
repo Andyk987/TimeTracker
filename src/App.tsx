@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import styled, { ThemeProvider } from 'styled-components';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import styled from 'styled-components';
+import { useAppSelector } from './app/hooks';
+import { RootState } from './app/store';
+import { ModalName } from './common/types';
+import DeleteModal from './components/molecules/Modal/DeleteModal';
+import UrlModal from './components/molecules/Modal/UrlModal';
+import { timeActions } from './features/time/timeSlice';
+import useStorageListener from './hooks/useStorageListener';
 import MainPage from './pages/Main';
-import Record from './pages/Record/index';
-import them from './styles/theme';
 
 const AppStyled = styled.div`
+  position: relative;
   max-width: 375px;
   max-height: 600px;
   width: 375px;
@@ -13,23 +19,32 @@ const AppStyled = styled.div`
 `;
 
 const App = () => {
-  const [state] = useState(true);
+  const [changedData] = useStorageListener();
 
-  const testRoute1 = (
-    <Routes>
-      <Route path="/popup.html" element={<MainPage />} />
-    </Routes>
-  );
+  const modal = useAppSelector((state: RootState) => state.common.modal);
 
-  const testRoute2 = (
-    <Routes>
-      <Route path="/popup.html" element={<Record />} />
-    </Routes>
-  );
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(timeActions.getInitState());
+  }, []);
+
+  useEffect(() => {
+    if (changedData) {
+      dispatch(timeActions.detectDataChanged(changedData));
+    }
+  }, [changedData]);
+
+  const modalList = {
+    urlModal: <UrlModal />,
+    editModal: <UrlModal />,
+    deleteModal: <DeleteModal />,
+  };
 
   return (
     <AppStyled>
-      <BrowserRouter>{state ? testRoute1 : testRoute2}</BrowserRouter>
+      <MainPage />
+      {modal.state && modalList[modal.type]}
     </AppStyled>
   );
 };

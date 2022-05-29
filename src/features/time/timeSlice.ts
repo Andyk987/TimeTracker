@@ -1,59 +1,36 @@
-import { createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
-import { WritableDraft } from "immer/dist/internal";
-import { GET_TIME } from "../../constants/timeConstants";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { TimeTrackerData } from "../../common/types";
+
+export type ButtonState = "Check" | "Stop" | "Loading";
+export type ReduxTimeTrackerData = Partial<Omit<TimeTrackerData, 'urlIds' | 'time' | 'timerId' | 'host'>>;
 
 export interface TimeState {
-  checkingStatus: "Check" | "Stop" | "Loading";
-  isChecking: boolean;
-  time?: number;
-  error?: string;
+  timeTrackerData: ReduxTimeTrackerData[];
+  currentIndex: number;
 }
 
 const initialState: TimeState = {
-  checkingStatus: "Check",
-  isChecking: false,
-  time: 0,
-  error: "",
+  timeTrackerData: [],
+  currentIndex: 0
 };
 
 const timeSlice = createSlice({
   name: "time",
   initialState,
   reducers: {
-    getInitState: () => {},
-    getInitStateSuccess: (
-      state,
-      { payload: { checkingStatus, isChecking } }: PayloadAction<TimeState>
-    ) => {
-      state.checkingStatus = checkingStatus;
-      state.isChecking = isChecking;
+    getInitState: () => { },
+    getInitStateSuccess: (state, action: PayloadAction<TimeTrackerData[]>) => {
+      state.timeTrackerData = action.payload;
+    },
+    getInitStateFail: () => { },
+
+    detectDataChanged: (state, action: PayloadAction<TimeTrackerData[]>) => {
+      state.timeTrackerData = action.payload;
     },
 
-    startChecking: (state: WritableDraft<TimeState>) => {
-      state.checkingStatus = "Loading";
-    },
-    startCheckingSuccess: (state: WritableDraft<TimeState>) => {
-      state.isChecking = true;
-      state.checkingStatus = "Stop";
-    },
-    startCheckingError: (state) => {
-      state.error = "fewrf";
-    },
-
-    stopChecking: (state: WritableDraft<TimeState>) => {
-      state.checkingStatus = "Loading";
-    },
-    stopCheckingSuccess: (state: WritableDraft<TimeState>) => {
-      state.isChecking = false;
-      state.checkingStatus = "Check";
-    },
-    stopCheckingError: (state) => {
-      state.error = "fewrfe";
-    },
-
-    getTime: (state: WritableDraft<TimeState>, action) => {
-      state.time += action.payload;
-    },
+    setCurrentIndex: (state, action: PayloadAction<number>) => {
+      state.currentIndex = action.payload;
+    }
   },
 });
 

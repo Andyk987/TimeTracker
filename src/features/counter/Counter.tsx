@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import Button from '../../components/atoms/Button';
-import Span from '../../components/atoms/Span';
 import { decrement, increment, selectCount } from './counterSlice';
 
 const StyledConter = styled.div``;

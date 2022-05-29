@@ -1,52 +1,63 @@
 import React, { memo } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
-interface ButtonStyles {
-  width?: string;
-  height?: string;
-  color?: string;
-  bgColor?: string;
-  border?: string;
-  radius?: string;
-  gap?: string;
-}
-
-interface ButtonProps extends ButtonStyles {
+interface ButtonProps {
   children?: React.ReactNode;
-  tag?: 'button' | 'div';
-  icon?: SVGAElement;
-  url?: string;
-  className?: string;
+  className?: string & (string | string[]);
+  buttonStyle: 'Full' | 'Border';
+  size?: 'small' | 'medium' | 'big';
   onClick?: (
     e: React.MouseEvent<HTMLButtonElement | HTMLDivElement, MouseEvent>
   ) => void;
 }
 
-const StyledButton = styled.button<ButtonProps>`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const StyledButton = styled.div<ButtonProps>`
+  ${({ theme }) => theme.common.flexCenter};
+  background: ${(props) =>
+    props.buttonStyle === 'Full' ? props.theme.colors.violet : 'none'};
+  border: ${(props) =>
+    props.buttonStyle === 'Border'
+      ? `2px solid ${props.theme.colors.violet}`
+      : 'none'};
+  border-radius: 2px;
+  color: ${(props) =>
+    props.buttonStyle === 'Full' ? 'white' : props.theme.colors.violet};
+  text-align: center;
   cursor: pointer;
-  width: ${(props) => (props.width ? props.width : 'auto')};
-  height: ${(props) => (props.height ? props.height : 'auto')};
-  color: ${(props) => props.color};
-  background: ${(props) => (props.bgColor ? props.bgColor : 'none')};
-  border: ${(props) => props.border};
-  border-radius: ${(props) => props.radius};
-  gap: ${(props) => props.gap};
+  box-sizing: border-box;
+
+  ${(props) => {
+    switch (props.size) {
+      case 'small':
+        return css`
+          width: 100px;
+          height: 27px;
+        `;
+      case 'medium':
+        return css``;
+      case 'big':
+        return css`
+          width: 120px;
+          height: 40px;
+        `;
+    }
+  }}
 `;
 
 const Button: React.FC<ButtonProps> = ({
   children,
-  tag,
-  icon,
-  url,
   className,
+  size = 'big',
+  buttonStyle,
   onClick,
-  ...args
 }) => {
   return (
-    <StyledButton {...args} as={tag} onClick={onClick} className={className}>
+    <StyledButton
+      className={className}
+      size={size}
+      buttonStyle={buttonStyle}
+      onClick={onClick}
+    >
       {children}
     </StyledButton>
   );

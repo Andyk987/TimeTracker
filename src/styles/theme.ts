@@ -3,7 +3,10 @@ import { DefaultTheme } from "styled-components";
 
 const colors = {
     dimgray: "#565656",
+    dimgrayHalf: "#56565680",
     violet: "#895CF2",
+    darkViolet: "#6C5789",
+    darkRed: "#E96262",
 };
 
 const gradientColors = {

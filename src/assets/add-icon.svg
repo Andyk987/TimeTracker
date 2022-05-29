@@ -1,0 +1,5 @@
+<svg width="current" height="current" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"
+    onClick="current">
+    <rect y="11" width="25" height="3" rx="1.5" fill="#895CF2" />
+    <rect x="11" y="25" width="25" height="3" rx="1.5" transform="rotate(-90 11 25)" fill="#895CF2" />
+</svg>

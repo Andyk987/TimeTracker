@@ -10,14 +10,19 @@
     "128": "icon128.png"
   },
   "action": {
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
-      "js": ["content.js"]
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ],
   "permissions": [
@@ -25,7 +30,10 @@
     "tabs",
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "idle"
   ],
-  "host_permissions": ["<all_urls>"]
+  "host_permissions": [
+    "<all_urls>"
+  ]
 }

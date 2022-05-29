@@ -1,0 +1,1 @@
+export const DEFAULT_URL = "https://www.youtube.com/watch?";
