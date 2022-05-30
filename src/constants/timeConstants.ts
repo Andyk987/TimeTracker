@@ -10,6 +10,10 @@ export const SEARCH_HISTORY = "SEARCH_HISTORY" as const;
 export const SEARCH_HISTORY_SUCCESS = "SEARCH_HISTORY_SUCCESS" as const;
 export const SEARCH_HISTORY_FAIL = "SEARCH_HISTORY_FAIL" as const;
 
+export const SEARCH_VISITS = "SEARCH_VISITS" as const;
+export const SEARCH_VISITS_SUCCESS = "SEARCH_VISITS_SUCCESS" as const;
+export const SEARCH_VISITS_FAIL = "SEARCH_VISITS_FAIL" as const;
+
 export const START_TIMER = "START_TIMER" as const;
 export const STOP_TIMER = "STOP_TIMER" as const;
 

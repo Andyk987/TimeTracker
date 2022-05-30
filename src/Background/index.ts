@@ -1,9 +1,29 @@
 import ChromeFunc, { DeviceStateChange, UrlRemove, UrlUpdate } from "../Chrome/chromeFunc";
 import { ChromeMessage, TimeRecord, TimeTrackerData } from "../common/types";
-import { ADD_DATA, ADD_DATA_ERROR, ADD_DATA_SUCCESS, DELETE_DATA, DELETE_DATA_ERROR, DELETE_DATA_SUCCESS, EDIT_DATA, EDIT_DATA_SUCCESS, END_TIME, SEARCH_HISTORY, SEARCH_HISTORY_SUCCESS, START_CHECKING, START_CHECKING_ERROR, START_CHECKING_SUCCESS, START_TIME, STOP_CHECKING, STOP_CHECKING_ERROR, STOP_CHECKING_SUCCESS, TIME_TRACKER_DATA } from "../constants/timeConstants";
+import {
+  ADD_DATA,
+  ADD_DATA_ERROR,
+  ADD_DATA_SUCCESS,
+  DELETE_DATA,
+  DELETE_DATA_ERROR,
+  DELETE_DATA_SUCCESS,
+  EDIT_DATA,
+  EDIT_DATA_SUCCESS,
+  END_TIME,
+  SEARCH_HISTORY,
+  SEARCH_HISTORY_SUCCESS,
+  SEARCH_VISITS,
+  SEARCH_VISITS_SUCCESS,
+  START_CHECKING,
+  START_CHECKING_ERROR,
+  START_CHECKING_SUCCESS,
+  START_TIME,
+  STOP_CHECKING,
+  STOP_CHECKING_ERROR,
+  STOP_CHECKING_SUCCESS,
+  TIME_TRACKER_DATA
+} from "../constants/timeConstants";
 import { lastDomainRegex } from "../constants/urlRegexConstants";
-
-const pattern = /(http(s)?:\/\/)([a-z0-9\w]+\.*)+[a-z0-9]{2,4}(\/)$/g;
 
 interface BackgroundMethod {
   initializeTimerData: (data: TimeTrackerData[]) => TimeTrackerData[];
@@ -176,6 +196,21 @@ class Background extends ChromeFunc implements BackgroundMethod {
       return record;
     }
   };
+
+  preProcessTitle(url: string): string {
+    try {
+      if (!url) throw Error('not url');
+
+      const host = new URL(url).host;
+      const lastDomain = lastDomainRegex.exec(host.slice(4))[0];
+      const preProcessedTitle = host.slice(4).split(lastDomain)[0].toUpperCase();
+      return preProcessedTitle;
+
+    } catch (err) {
+      console.log(err);
+      return url;
+    }
+  }
 }
 
 
@@ -290,25 +325,50 @@ const handlePortMessage = (port: chrome.runtime.Port, msg: ChromeMessage) => {
   switch (msg.code) {
     case ADD_DATA:
       try {
-        console.log(msg);
         if (!msg.data.timeTrackerData.url) throw Error('nope');
-        const { url, title } = { ...msg.data.timeTrackerData }
+        const { url, title } = { ...msg.data.timeTrackerData };
 
-        const host = new URL(url).host;
-        const lastDomain = lastDomainRegex.exec(host.slice(4))[0];
-        console.log(lastDomain);
-        const preProcessedTitle = host.slice(4).split(lastDomain)[0].toUpperCase();
+        if (!title) {
+          ChromeFunc.searchVisits({ url }, (res) => {
+            if (res.length === 0) {
+              const preTitle = background.preProcessTitle(url);
 
+              const newData = background.createTimerData(url, preTitle);
+              if (!newData) throw Error('creat err');
 
-        const newData = background.createTimerData(url, title ? title : preProcessedTitle);
-        if (!newData) throw Error('creat err');
+              const result = background.setNewTimerData(newData);
+              ChromeFunc.setStorageData<TimeTrackerData[]>(TIME_TRACKER_DATA, result);
 
-        const result = background.setNewTimerData(newData);
-        ChromeFunc.setStorageData<TimeTrackerData[]>(TIME_TRACKER_DATA, result);
+              return port.postMessage(<ChromeMessage>{ code: ADD_DATA_SUCCESS });
+            }
+            const id = res[0].id;
+            const startTime = res[0].visitTime;
 
-        return port.postMessage(<ChromeMessage>{ code: ADD_DATA_SUCCESS });
+            chrome.history.search({ text: url, startTime }, (res) => {
+              const title = res.filter((v) => v.id === id)[0].title;
+
+              const newData = background.createTimerData(url, title);
+              if (!newData) throw Error('creat err');
+
+              const result = background.setNewTimerData(newData);
+              ChromeFunc.setStorageData<TimeTrackerData[]>(TIME_TRACKER_DATA, result);
+
+              return port.postMessage(<ChromeMessage>{ code: ADD_DATA_SUCCESS });
+            })
+          });
+        } else {
+          const newData = background.createTimerData(url, title);
+          if (!newData) throw Error('creat err');
+
+          const result = background.setNewTimerData(newData);
+          ChromeFunc.setStorageData<TimeTrackerData[]>(TIME_TRACKER_DATA, result);
+
+          return port.postMessage(<ChromeMessage>{ code: ADD_DATA_SUCCESS });
+        }
+
+        return;
       } catch (err) {
-        console.log(err);
+        console.log(err, 'add data err');
         return port.postMessage(<ChromeMessage>{ code: ADD_DATA_ERROR, prevCode: msg.code });
       }
 
@@ -323,26 +383,27 @@ const handlePortMessage = (port: chrome.runtime.Port, msg: ChromeMessage) => {
 
         return port.postMessage(<ChromeMessage>{ code: DELETE_DATA_SUCCESS });
       } catch (err) {
-        console.log(err);
+        console.log(err, 'delete data err');
         return port.postMessage(<ChromeMessage>{ code: DELETE_DATA_ERROR, prevCode: msg.code });
       }
 
     case EDIT_DATA:
       try {
         if (!msg.data.editData.prevUrl) throw Error('not url');
-        const { url, title } = msg.data.timeTrackerData;
+        const { url, title } = { ...msg.data.timeTrackerData };
         const data = background.getTimerData();
         const getUrlIndex = data.findIndex(v => v.url === msg.data.editData.prevUrl);
         if (getUrlIndex === -1) throw Error("url doesn't exist");
 
-        const editedData = background.createTimerData(url, title);
+        const preTitle = background.preProcessTitle(url);
+        const editedData = background.createTimerData(url, title ? title : preTitle);
         const result = background.editTimerData(getUrlIndex, editedData);
 
         ChromeFunc.setStorageData<TimeTrackerData[]>(TIME_TRACKER_DATA, result);
 
         return port.postMessage(<ChromeMessage>{ code: EDIT_DATA_SUCCESS });
       } catch (err) {
-        console.log(err);
+        console.log(err, 'edit data err');
         return port.postMessage(<ChromeMessage>{ code: EDIT_DATA_SUCCESS, prevCode: msg.code });
       }
 
@@ -374,7 +435,7 @@ const handlePortMessage = (port: chrome.runtime.Port, msg: ChromeMessage) => {
 
         return port.postMessage(<ChromeMessage>{ code: START_CHECKING_SUCCESS, data: { timeTrackerData: { url: msg.data.timeTrackerData.url } } });
       } catch (err) {
-        console.log(err);
+        console.log(err, 'start checking err');
         return port.postMessage(<ChromeMessage>{ code: START_CHECKING_ERROR, prevCode: msg.code, data: { timeTrackerData: { url: msg.data.timeTrackerData.url } } });
       }
 
@@ -392,7 +453,7 @@ const handlePortMessage = (port: chrome.runtime.Port, msg: ChromeMessage) => {
 
         return port.postMessage(<ChromeMessage>{ code: STOP_CHECKING_SUCCESS, data: { timeTrackerData: { url: msg.data.timeTrackerData.url } } });
       } catch (err) {
-        console.log(err);
+        console.log(err, 'stop checking err');
         return port.postMessage(<ChromeMessage>{ code: STOP_CHECKING_ERROR, prevCode: msg.code, data: { timeTrackerData: { url: msg.data.timeTrackerData.url } } });
       }
 
@@ -400,14 +461,14 @@ const handlePortMessage = (port: chrome.runtime.Port, msg: ChromeMessage) => {
       try {
         if (!msg.data.searchHistory.input) throw Error('not input');
 
-        chrome.history.search({ text: msg.data.searchHistory.input, startTime: 0, endTime: Date.now(), maxResults: 10 }, (res) => {
+        chrome.history.search({ text: msg.data.searchHistory.input, startTime: 0, endTime: Date.now(), maxResults: 500 }, (res) => {
           port.postMessage(<ChromeMessage>{ code: SEARCH_HISTORY_SUCCESS, data: { searchHistory: { historyList: res } } });
         })
+        return;
       } catch (err) {
-
+        console.log(err, 'search history err');
       }
   }
-
 };
 
 let lifeline;

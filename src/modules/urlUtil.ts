@@ -36,7 +36,7 @@ export const validateUrl = (url: string): string => {
             if (protocolValidRegex.exec(url) === null) throw Error('not passed with protocalValidRegex');
 
             let splitUrl: string = url.includes('https://') ? url.split('https://')[1] : url.split('http://')[1];
-            if (webValidRegex.exec(splitUrl) !== null) return url;
+            if (webValidRegex.exec(splitUrl) !== null) return 'https://' + splitUrl;
             return 'https://www.' + splitUrl;
         } else {
             if (webValidRegex.exec(url) !== null) return 'https://' + url;

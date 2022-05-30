@@ -1,13 +1,11 @@
 import _ from 'lodash';
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import styled from 'styled-components';
 import {
-  ADD_DATA,
   ADD_DATA_SUCCESS,
   SEARCH_HISTORY,
   SEARCH_HISTORY_SUCCESS,
-  EDIT_DATA,
   EDIT_DATA_SUCCESS,
 } from '../../../constants/timeConstants';
 import useChromeMessage from '../../../hooks/useChromeMessage';
@@ -35,7 +33,8 @@ interface UrlModalProps {
 }
 
 interface IUrlForm {
-  urlModal: string;
+  urlModal?: string;
+  editModal?: string;
 }
 
 const StyledUrlModal = styled(Modal)`
@@ -107,8 +106,10 @@ const UrlModal: React.FC<UrlModalProps> = ({}) => {
     if (url?.length === 0) return setHistoryList([]);
     if (!urlRegex.test(url)) return;
 
-    const msg = SEARCH_HISTORY;
-    sendMessage({ code: msg, data: { searchHistory: { input: url } } });
+    sendMessage({
+      code: SEARCH_HISTORY,
+      data: { searchHistory: { input: url } },
+    });
   }, [url]);
 
   useEffect(() => {
@@ -129,16 +130,14 @@ const UrlModal: React.FC<UrlModalProps> = ({}) => {
 
   useEffect(() => {
     if (moveFocusIndex !== -1) return;
-    setFocus('urlModal');
+
+    setFocus(currentModal.type);
   }, [moveFocusIndex]);
 
   const onSubmit: SubmitHandler<IUrlForm> = (data) => {
-    if (!data || !data.urlModal) return;
+    if (!data || !data[currentModal.type]) return;
 
-    const msg = currentModal.type === 'urlModal' ? ADD_DATA : EDIT_DATA;
-    const prevUrl = msg === 'EDIT_DATA' ? currentModal.metadata?.url : null;
-
-    const beforeValidateUrl = validateHost(data.urlModal);
+    const beforeValidateUrl = validateHost(data[currentModal.type]);
     if (!beforeValidateUrl) return;
 
     const result = validateUrl(beforeValidateUrl);
@@ -156,9 +155,13 @@ const UrlModal: React.FC<UrlModalProps> = ({}) => {
     }
 
     setSubmitLoading(true);
+    console.log(currentModal.metadata?.msg, 'in url modal');
     sendMessage({
-      code: msg,
-      data: { editData: { prevUrl }, timeTrackerData: { url: result } },
+      code: currentModal.metadata?.msg,
+      data: {
+        editData: { prevUrl: currentModal.metadata?.url },
+        timeTrackerData: { url: result },
+      },
     });
   };
 
@@ -202,12 +205,10 @@ const UrlModal: React.FC<UrlModalProps> = ({}) => {
       if (!result) return;
 
       setSubmitLoading(true);
-      const msg = currentModal.type === 'urlModal' ? ADD_DATA : EDIT_DATA;
-      const prevUrl = msg === 'EDIT_DATA' ? currentModal.metadata?.url : null;
       sendMessage({
-        code: msg,
+        code: currentModal.metadata?.msg,
         data: {
-          editData: { prevUrl },
+          editData: { prevUrl: currentModal.metadata?.url },
           timeTrackerData: { url: result, title },
         },
       });
@@ -246,10 +247,11 @@ const UrlModal: React.FC<UrlModalProps> = ({}) => {
           handleInvalid={handleInvalid}
         >
           <Input
-            label={currentModal.type}
+            label={currentModal.metadata?.contents}
             placeholder="Url"
             height="35px"
             register={register}
+            registerName={currentModal.type}
             required
             type={'text'}
             errMessage={errMessage}

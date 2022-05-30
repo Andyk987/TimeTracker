@@ -5,6 +5,11 @@ import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { useAppSelector } from '../../app/hooks';
 import { RootState } from '../../app/store';
+import {
+  EDIT_DATA,
+  EDIT_DATA_ERROR,
+  EDIT_DATA_SUCCESS,
+} from '../../constants/timeConstants';
 import { commonActions } from '../../features/common/commonSlice';
 import Title from '../molecules/Title';
 
@@ -37,7 +42,6 @@ const Header = ({}: HeaderProps) => {
   const currentUrl = useAppSelector(
     (state: RootState) => state.time.timeTrackerData[currentIndex]?.url
   );
-
   const dispatch = useDispatch();
 
   const handleHeader = useCallback(() => {
@@ -45,7 +49,12 @@ const Header = ({}: HeaderProps) => {
       commonActions.toogleModal({
         modalType: 'editModal',
         modalState: true,
-        modalMetaData: { url: currentUrl },
+        modalMetaData: {
+          url: currentUrl,
+          msg: EDIT_DATA,
+          res: { success: EDIT_DATA_SUCCESS, error: EDIT_DATA_ERROR },
+          contents: 'Change Url',
+        },
       })
     );
   }, [currentUrl]);

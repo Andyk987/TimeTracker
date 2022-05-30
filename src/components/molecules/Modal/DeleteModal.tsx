@@ -106,7 +106,7 @@ const DeleteModal: React.FC<DeleteModalProps> = () => {
   const handleDelete = useCallback(() => {
     setLoading(true);
     sendMessage({
-      code: DELETE_DATA,
+      code: currentModal.metadata?.msg,
       data: { timeTrackerData: { url: currentModal.metadata.url } },
     });
   }, []);
@@ -123,8 +123,9 @@ const DeleteModal: React.FC<DeleteModalProps> = () => {
   const handleKeyDown = (e) => {
     if (e.key !== 'Enter') return;
     setLoading(true);
+    console.log(currentModal.metadata.msg, 'in delete modal');
     sendMessage({
-      code: DELETE_DATA,
+      code: currentModal.metadata?.msg,
       data: { timeTrackerData: { url: currentModal.metadata.url } },
     });
   };

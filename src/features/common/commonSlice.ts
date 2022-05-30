@@ -6,6 +6,12 @@ type Modal = {
     state: boolean;
     metadata: {
         url?: string;
+        msg?: string;
+        res?: {
+            success?: string;
+            error?: string;
+        }
+        contents?: string;
     }
 }
 

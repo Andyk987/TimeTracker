@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Card, { StyledCard } from './Card';
 import CardContent from '../CardContent';
 import { ReduxTimeTrackerData } from '../../../features/time/timeSlice';
+import CardContentTimer from '../Timer/CardContentTimer';
 
 const TOTAL_DATA_LEN = 4;
 
@@ -30,7 +31,7 @@ const StyledTimeCards = styled.div`
   align-items: center;
   justify-contents: start;
   gap: 10px;
-  margin-top: 10px;
+  padding-top: 10px;
   width: 100%;
   height: 205px;
   max-height: 205px;
@@ -108,7 +109,7 @@ const TimeCards: React.FC<TimeCardsProps> = ({
           onClick={(e) => handleClickCard(e, i)}
         >
           <CardContent content={v.title} />
-          <CardContent>0</CardContent>
+          <CardContentTimer record={v.timeRecord} />
           <CardContent>
             {i === currentIndex ? (
               <CheckingState className="content">

@@ -22,6 +22,7 @@ interface ChromeFuncMethodStatic {
     removeUrlRemoved: UrlRemove;
     removeDeviceStateChanged: DeviceStateChange;
     searchHistory: (query: chrome.history.HistoryQuery, cb: (res: chrome.history.HistoryItem[]) => void) => void;
+    searchVisits: (details: chrome.history.Url, cb: (res: chrome.history.VisitItem[]) => void) => Promise<void>;
 }
 
 const StaticImplements = <T>() => {
@@ -84,6 +85,10 @@ class ChromeFunc implements ChromeFuncMethod {
 
     static searchHistory(query: chrome.history.HistoryQuery, cb: (res: chrome.history.HistoryItem[]) => void): void {
         return this.chrome.history.search(query, cb);
+    }
+
+    static async searchVisits(details: chrome.history.Url, cb: (res: chrome.history.VisitItem[]) => void): Promise<void> {
+        return await this.chrome.history.getVisits(details, cb);
     }
 
     async getAllWindows(...arg): Promise<number[] | chrome.windows.Window[]> {

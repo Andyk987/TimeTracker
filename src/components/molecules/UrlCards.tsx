@@ -93,15 +93,6 @@ const UrlCards: React.FC<UrlCardsProps> = ({
 
   return (
     <StyledUrlCards isList={historyList.length > 0 ? true : false}>
-      {/* {list.map((v, i) => {
-        return (
-          <UrlCard
-            key={i}
-            history={v}
-            handleUrlCardClick={handleUrlCardClick}
-          />
-        );
-      })} */}
       {list.map((v, i) => {
         return (
           <UrlCard

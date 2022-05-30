@@ -18,12 +18,14 @@ export type TimeTrackerData = {
 type StartChecking = {};
 type StopChecing = {};
 type SearchHistory = { input?: string, historyList?: chrome.history.HistoryItem[] };
+type SearchVisits = { input?: string, visitList?: chrome.history.VisitItem[] };
 type EditData = { prevUrl: string };
 
 type Data = {
     startChecking?: StartChecking;
     stopChecking?: StopChecing;
     searchHistory?: SearchHistory;
+    searchVisits?: SearchVisits;
     editData?: EditData;
     timeTrackerData?: Partial<TimeTrackerData>;
 }

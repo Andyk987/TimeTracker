@@ -30,6 +30,7 @@ const useChromeMessage = (name: string = 'chrome', ms: number = 4) => {
   }, [_message]);
 
   const toogleState = (msg: ChromeMessage) => {
+    console.log(msg, 'in useChrome');
     _setMessage(msg);
   };
 

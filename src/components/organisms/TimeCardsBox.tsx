@@ -1,11 +1,19 @@
-import classNames from 'classnames';
 import React from 'react';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { useAppSelector } from '../../app/hooks';
 import { RootState } from '../../app/store';
-import { START_CHECKING, STOP_CHECKING } from '../../constants/timeConstants';
+import {
+  ADD_DATA,
+  ADD_DATA_ERROR,
+  ADD_DATA_SUCCESS,
+  DELETE_DATA,
+  DELETE_DATA_ERROR,
+  DELETE_DATA_SUCCESS,
+  START_CHECKING,
+  STOP_CHECKING,
+} from '../../constants/timeConstants';
 import { commonActions } from '../../features/common/commonSlice';
 import { timeActions } from '../../features/time/timeSlice';
 import useChromeMessage from '../../hooks/useChromeMessage';
@@ -45,7 +53,18 @@ const TimeCardsBox: React.FC = ({}) => {
 
   const handleAddCard = () => {
     dispatch(
-      commonActions.toogleModal({ modalType: 'urlModal', modalState: true })
+      commonActions.toogleModal({
+        modalType: 'urlModal',
+        modalState: true,
+        modalMetaData: {
+          msg: ADD_DATA,
+          res: {
+            success: ADD_DATA_SUCCESS,
+            error: ADD_DATA_ERROR,
+          },
+          contents: 'Url',
+        },
+      })
     );
   };
 
@@ -54,7 +73,14 @@ const TimeCardsBox: React.FC = ({}) => {
       commonActions.toogleModal({
         modalType: 'deleteModal',
         modalState: true,
-        modalMetaData: { url: deleteUrl },
+        modalMetaData: {
+          url: deleteUrl,
+          msg: DELETE_DATA,
+          res: {
+            success: DELETE_DATA_SUCCESS,
+            error: DELETE_DATA_ERROR,
+          },
+        },
       })
     );
   };

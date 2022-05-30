@@ -8,7 +8,7 @@ import styled from 'styled-components';
 
 interface UrlFormProps {
   children: React.ReactNode;
-  onSubmit: SubmitHandler<{ urlModal: string }>;
+  onSubmit: SubmitHandler<{ urlModal?: string; editModal?: string }>;
   handleSubmit: UseFormHandleSubmit<FieldValues>;
   handleInput: (e: any) => void;
   handleInvalid: (e: any) => void;

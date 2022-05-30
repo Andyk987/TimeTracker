@@ -1,15 +1,16 @@
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import { FieldValues, UseFormRegister } from 'react-hook-form';
 import styled from 'styled-components';
 import { ModalName } from '../../common/types';
 
 interface InputProps {
-  label?: ModalName;
+  label?: string;
   defaultValue?: string | number | readonly string[];
   type?: React.HTMLInputTypeAttribute;
   placeholder?: string;
   height?: string;
   register?: UseFormRegister<FieldValues>;
+  registerName?: ModalName;
   required?: boolean;
   len?: number;
   isError?: boolean;
@@ -99,6 +100,7 @@ const Input: React.FC<InputProps> = ({
   label,
   height = 'auto',
   register,
+  registerName,
   required = true,
   errMessage,
   isError,
@@ -114,14 +116,14 @@ const Input: React.FC<InputProps> = ({
   return (
     <StyledInputWrapper>
       <StyledLabelBox>
-        <StyledLabel>{label === 'urlModal' ? 'Url' : 'ChangeUrl'}</StyledLabel>
+        <StyledLabel>{label}</StyledLabel>
         {errMessage && <StyledLabel>{errMessage}</StyledLabel>}
       </StyledLabelBox>
       <StyledInputBoxWrapper>
         <StyledInput
           {...defualt}
           required
-          {...register(label, {
+          {...register(registerName, {
             required,
           })}
           autoComplete="off"
